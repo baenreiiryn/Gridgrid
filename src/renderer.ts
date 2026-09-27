@@ -19,6 +19,7 @@ let stats = new Map<string, { memoryMB: number; pid: number }>();
 let boundsRaf = 0;
 let modalOpen = false;
 let draggedPanelId: string | null = null;
+let workspaceDialogMode: 'create' | 'rename' = 'create';
 
 function esc(value: string): string {
   return value.replace(/[&<>'"]/g, (char) => ({
@@ -141,12 +142,13 @@ function render(): void {
           <span><i class="online-dot"></i> Local</span>
           <span>${panels.length} WebContentsView</span>
           <span class="status-spacer"></span>
-          <span>Gridgrid v0.2.0</span>
+          <span>Gridgrid v0.2.2</span>
         </footer>
       </main>
     </div>
 
     ${accountDialog()}
+    ${workspaceDialog()}
     <div id="toast" class="toast" role="status"></div>
   `;
 
@@ -247,6 +249,73 @@ function accountDialog(): string {
   `;
 }
 
+function workspaceDialog(): string {
+  return `
+    <dialog id="workspace-dialog" class="account-dialog workspace-dialog">
+      <form id="workspace-form">
+        <div class="dialog-heading">
+          <div>
+            <strong id="workspace-dialog-title">Novo workspace</strong>
+            <span id="workspace-dialog-subtitle">Crie um grupo separado de contas</span>
+          </div>
+          <button type="button" id="close-workspace-dialog" class="dialog-close" aria-label="Fechar">×</button>
+        </div>
+
+        <label class="field">
+          <span>Nome do workspace</span>
+          <input id="workspace-name" name="workspaceName" autocomplete="off" maxlength="60" required />
+        </label>
+
+        <div class="dialog-note">
+          Cada workspace pode ter suas próprias contas, ordem e layout. Os logins das contas existentes não são alterados.
+        </div>
+
+        <div class="dialog-actions">
+          <button type="button" id="cancel-workspace-dialog" class="ghost-button">Cancelar</button>
+          <button type="submit" id="save-workspace-button" class="primary">Criar workspace</button>
+        </div>
+      </form>
+    </dialog>
+  `;
+}
+
+function openWorkspaceDialog(mode: 'create' | 'rename'): void {
+  const dialog = document.querySelector<HTMLDialogElement>('#workspace-dialog');
+  const input = document.querySelector<HTMLInputElement>('#workspace-name');
+  const title = document.querySelector<HTMLElement>('#workspace-dialog-title');
+  const subtitle = document.querySelector<HTMLElement>('#workspace-dialog-subtitle');
+  const save = document.querySelector<HTMLButtonElement>('#save-workspace-button');
+  if (!dialog || !input || !title || !subtitle || !save) return;
+
+  workspaceDialogMode = mode;
+  const workspace = activeWorkspace();
+
+  if (mode === 'create') {
+    title.textContent = 'Novo workspace';
+    subtitle.textContent = 'Crie um grupo separado de contas';
+    save.textContent = 'Criar workspace';
+    input.value = `Workspace ${state.workspaces.length + 1}`;
+  } else {
+    title.textContent = 'Renomear workspace';
+    subtitle.textContent = 'Altere apenas o nome deste workspace';
+    save.textContent = 'Salvar nome';
+    input.value = workspace.name;
+  }
+
+  modalOpen = true;
+  sendBounds();
+  dialog.showModal();
+  setTimeout(() => input.select(), 0);
+}
+
+function closeWorkspaceDialog(): void {
+  const dialog = document.querySelector<HTMLDialogElement>('#workspace-dialog');
+  if (dialog?.open) dialog.close();
+  modalOpen = false;
+  scheduleBounds();
+}
+
+
 function openAccountDialog(): void {
   const dialog = document.querySelector<HTMLDialogElement>('#account-dialog');
   const name = document.querySelector<HTMLInputElement>('#account-name');
@@ -293,19 +362,12 @@ function bindEvents(): void {
     });
   });
 
-  document.querySelector('#add-workspace')?.addEventListener('click', async () => {
-    const name = prompt('Nome do workspace:', `Workspace ${state.workspaces.length + 1}`);
-    if (name === null) return;
-    state = await window.gridgrid.addWorkspace(name);
-    render();
+  document.querySelector('#add-workspace')?.addEventListener('click', () => {
+    openWorkspaceDialog('create');
   });
 
-  document.querySelector('#rename-workspace')?.addEventListener('click', async () => {
-    const workspace = activeWorkspace();
-    const name = prompt('Novo nome:', workspace.name);
-    if (!name?.trim()) return;
-    state = await window.gridgrid.renameWorkspace(workspace.id, name);
-    render();
+  document.querySelector('#rename-workspace')?.addEventListener('click', () => {
+    openWorkspaceDialog('rename');
   });
 
   document.querySelector('#delete-workspace')?.addEventListener('click', async () => {
@@ -341,6 +403,35 @@ function bindEvents(): void {
   document.querySelector('#empty-add-panel')?.addEventListener('click', openAccountDialog);
   document.querySelector('#close-account-dialog')?.addEventListener('click', closeAccountDialog);
   document.querySelector('#cancel-account-dialog')?.addEventListener('click', closeAccountDialog);
+
+  document.querySelector('#close-workspace-dialog')?.addEventListener('click', closeWorkspaceDialog);
+  document.querySelector('#cancel-workspace-dialog')?.addEventListener('click', closeWorkspaceDialog);
+
+  const workspaceDialogElement = document.querySelector<HTMLDialogElement>('#workspace-dialog');
+  workspaceDialogElement?.addEventListener('cancel', () => {
+    modalOpen = false;
+    scheduleBounds();
+  });
+  workspaceDialogElement?.addEventListener('close', () => {
+    modalOpen = false;
+    scheduleBounds();
+  });
+
+  document.querySelector<HTMLFormElement>('#workspace-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const input = document.querySelector<HTMLInputElement>('#workspace-name');
+    const name = input?.value.trim();
+    if (!name) return;
+
+    if (workspaceDialogMode === 'create') {
+      state = await window.gridgrid.addWorkspace(name);
+    } else {
+      state = await window.gridgrid.renameWorkspace(activeWorkspace().id, name);
+    }
+
+    closeWorkspaceDialog();
+    render();
+  });
 
   const dialog = document.querySelector<HTMLDialogElement>('#account-dialog');
   dialog?.addEventListener('cancel', () => {

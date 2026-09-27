@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, WebContentsView } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, WebContentsView, type OpenDialogOptions, type SaveDialogOptions } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -215,7 +215,7 @@ async function exportWorkspace(workspaceId: string): Promise<FileOperationResult
   const workspace = getWorkspace(workspaceId);
   if (!workspace) return { ok: false, message: 'Workspace não encontrado.' };
 
-  const options = {
+  const options: SaveDialogOptions = {
     title: 'Exportar workspace',
     defaultPath: `${workspace.name.replace(/[\\/:*?"<>|]/g, '_')}.gridgrid.json`,
     filters: [
@@ -242,9 +242,9 @@ async function exportWorkspace(workspaceId: string): Promise<FileOperationResult
 }
 
 async function importWorkspace(): Promise<FileOperationResult> {
-  const options = {
+  const options: OpenDialogOptions = {
     title: 'Importar workspace',
-    properties: ['openFile'] as const,
+    properties: ['openFile'],
     filters: [
       { name: 'Gridgrid Workspace', extensions: ['json'] }
     ]

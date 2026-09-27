@@ -492,16 +492,18 @@ function registerIpc(): void {
   });
 }
 
-app.whenReady().then(() => {
-  state = loadState();
-  registerIpc();
-  createMainWindow();
+if (gotSingleInstanceLock) {
+  app.whenReady().then(() => {
+    state = loadState();
+    registerIpc();
+    createMainWindow();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+    });
   });
-});
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+  });
+}

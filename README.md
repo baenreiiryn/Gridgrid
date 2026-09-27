@@ -2,9 +2,21 @@
 
 Gridgrid is a free, open-source desktop multi-session browser aimed at idle games and websites.
 
-The first preset is **Huntera**, but the core is intentionally generic: each panel runs as an isolated persistent Chromium session with its own cookies, cache and local storage.
+The first built-in preset is **Huntera**, but the core is generic: each panel runs as an isolated persistent Chromium session with its own cookies, cache and local storage.
 
-## v0.1 foundation
+## v0.2
+
+- Account creation dialog with name, preset/site, URL and color
+- Built-in Huntera preset plus custom-site sessions
+- Drag-and-drop account ordering; the saved order is also used by the grid
+- Workspace import/export using `.gridgrid.json`
+- Exported workspaces intentionally exclude cookies and authentication data
+- Window size/position and maximized state restore on reopen
+- Google/OAuth popups work as real child windows instead of replacing the game panel
+- Existing v0.1 sessions are migrated automatically
+- Development command compiles Electron before launch
+
+## Core features
 
 - Multiple independent accounts in one desktop window
 - Persistent sessions using Electron `persist:` partitions
@@ -38,15 +50,20 @@ npm run dist:win
 
 The Windows installer will be written to `release/`.
 
+## Workspace backups
+
+Use **Exportar** in the top bar to save the active workspace and **Importar** to restore a workspace file.
+
+Workspace backups contain layout and account configuration only. Login cookies, Google authentication sessions and other Chromium session storage are not exported.
+
 ## Roadmap
 
-- Preset manager for Huntera and other browser idle games
-- Import/export workspaces
-- Reorder accounts and workspaces
-- Free-form drag layout
+- More built-in game presets
+- Reorder workspaces
+- Optional free-form panel layout
 - Keyboard shortcuts
 - Better CPU/RAM metrics
 - Optional updater through GitHub Releases
-- Session data cleanup when an account is deleted
+- Optional cleanup of Chromium session data when an account is deleted
 
 Gridgrid is a session organizer, not an automation/bot engine. Users are responsible for complying with the rules of the sites they open.

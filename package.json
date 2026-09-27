@@ -1,12 +1,12 @@
 {
   "name": "gridgrid",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Free multi-session desktop browser for idle games and websites.",
   "main": "dist-electron/main.js",
   "author": "Gridgrid",
   "license": "MIT",
   "scripts": {
-    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && cross-env GRIDGRID_DEV_URL=http://127.0.0.1:5173 electron .\"",
+    "dev": "tsc -p tsconfig.main.json && concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && cross-env GRIDGRID_DEV_URL=http://127.0.0.1:5173 electron .\"",
     "build": "tsc -p tsconfig.main.json && vite build",
     "start": "electron .",
     "dist": "npm run build && electron-builder",
@@ -37,7 +37,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },

@@ -1,4 +1,5 @@
 export type LayoutMode = 'auto' | 'columns' | 'rows' | 'focus';
+export type GamePresetId = 'huntera' | 'custom';
 
 export interface PanelConfig {
   id: string;
@@ -7,6 +8,7 @@ export interface PanelConfig {
   color: string;
   zoom: number;
   muted: boolean;
+  presetId?: GamePresetId;
 }
 
 export interface WorkspaceConfig {
@@ -17,10 +19,19 @@ export interface WorkspaceConfig {
   panels: PanelConfig[];
 }
 
+export interface WindowBounds {
+  x?: number;
+  y?: number;
+  width: number;
+  height: number;
+  maximized?: boolean;
+}
+
 export interface AppState {
   version: 1;
   activeWorkspaceId: string;
   workspaces: WorkspaceConfig[];
+  windowBounds?: WindowBounds;
 }
 
 export interface PanelBounds {
@@ -30,4 +41,12 @@ export interface PanelBounds {
   width: number;
   height: number;
   visible: boolean;
+}
+
+export interface FileOperationResult {
+  ok: boolean;
+  canceled?: boolean;
+  path?: string;
+  message?: string;
+  state?: AppState;
 }

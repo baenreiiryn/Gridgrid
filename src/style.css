@@ -146,3 +146,6 @@ button { color: inherit; }
   .layout-switcher button { padding-left: 7px; padding-right: 7px; }
   .workspace-tools .ghost { padding-left: 5px; padding-right: 5px; }
 }
+
+
+.workspace-dialog { width: min(390px, calc(100vw - 40px)); }

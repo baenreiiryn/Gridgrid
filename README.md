@@ -1,5 +1,14 @@
 # Gridgrid
 
+## v0.2.2
+
+- Workspace creation no longer uses Chromium `prompt()`
+- New in-app dialog for creating workspaces
+- Same dialog is used to rename a workspace
+- Opening workspace dialogs temporarily hides embedded game views so the dialog always stays visible
+- Existing workspaces, accounts and login sessions are preserved
+
+
 Gridgrid is a free, open-source desktop multi-session browser aimed at idle games and websites.
 
 The first built-in preset is **Huntera**, but the core is generic: each panel runs as an isolated persistent Chromium session with its own cookies, cache and local storage.

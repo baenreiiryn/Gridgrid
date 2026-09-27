@@ -21,6 +21,19 @@ let mainWindow: BrowserWindow | null = null;
 let state: AppState;
 const panelViews = new Map<string, WebContentsView>();
 
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  });
+}
+
 function normalizeUrl(input: string): string {
   const trimmed = input.trim();
   if (!trimmed) return DEFAULT_URL;

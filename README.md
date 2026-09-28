@@ -1,5 +1,30 @@
 # Gridgrid
 
+## v0.3.0
+
+- Windows NSIS installer: no Node.js installation is required to use Gridgrid
+- Desktop and Start Menu shortcuts
+- GitHub Releases updater using `electron-updater`
+- Automatic update check after launch and every 6 hours
+- Automatic background download with progress in the Gridgrid status bar
+- One-click **Reiniciar e instalar** after an update finishes downloading
+- Windows release workflow publishes `Gridgrid-Setup-<version>.exe` and `latest.yml`
+
+### Install for normal use
+
+Download the latest **Gridgrid Setup** from GitHub Releases and run the installer. The packaged Electron app contains the runtime it needs, so Node.js and a CMD window are **not required**.
+
+After the first installation, future versions are detected and downloaded from GitHub Releases by Gridgrid itself.
+
+### Development
+
+Node.js is only required when working on Gridgrid's source code:
+
+```bash
+npm install
+npm run dev
+```
+
 ## v0.2.2
 
 - Workspace creation no longer uses Chromium `prompt()`

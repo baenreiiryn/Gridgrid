@@ -12,6 +12,9 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
+    env:
+      WINDOWS_CERTIFICATE_PFX_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_PFX_BASE64 }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -25,7 +28,39 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Prepare code-signing certificate
+        if: ${{ env.WINDOWS_CERTIFICATE_PFX_BASE64 != '' }}
+        shell: pwsh
+        run: |
+          $certPath = Join-Path $env:RUNNER_TEMP "gridgrid-signing.pfx"
+          [IO.File]::WriteAllBytes(
+            $certPath,
+            [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_PFX_BASE64)
+          )
+          "WIN_CSC_LINK=$certPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "WIN_CSC_KEY_PASSWORD=$env:WINDOWS_CERTIFICATE_PASSWORD" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Remove-Item Env:WINDOWS_CERTIFICATE_PFX_BASE64
+
       - name: Build and publish Windows installer
         run: npm run release:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify installer signature
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path release -Filter "Gridgrid-Setup-*.exe" | Select-Object -First 1
+          if (-not $installer) {
+            throw "Gridgrid installer was not produced."
+          }
+
+          $signature = Get-AuthenticodeSignature $installer.FullName
+          Write-Host "Installer: $($installer.Name)"
+          Write-Host "Signature status: $($signature.Status)"
+          if ($signature.SignerCertificate) {
+            Write-Host "Signer: $($signature.SignerCertificate.Subject)"
+          }
+
+          if ($env:WIN_CSC_LINK -and $signature.Status -ne "Valid") {
+            throw "A signing certificate was supplied but the installer signature is not valid."
+          }

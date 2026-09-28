@@ -28,8 +28,17 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Require code-signing certificate
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PFX_BASE64)) {
+            throw "WINDOWS_CERTIFICATE_PFX_BASE64 is not configured. Public releases must be Authenticode-signed."
+          }
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PASSWORD)) {
+            throw "WINDOWS_CERTIFICATE_PASSWORD is not configured. Public releases must be Authenticode-signed."
+          }
+
       - name: Prepare code-signing certificate
-        if: ${{ env.WINDOWS_CERTIFICATE_PFX_BASE64 != '' }}
         shell: pwsh
         run: |
           $certPath = Join-Path $env:RUNNER_TEMP "gridgrid-signing.pfx"

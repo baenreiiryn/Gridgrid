@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { AppState, FileOperationResult, LayoutMode, PanelBounds, PanelConfig } from './types';
+import type { AppState, FileOperationResult, LayoutMode, PanelBounds, PanelConfig, UpdateStatus } from './types';
 
 const api = {
   getState: (): Promise<AppState> => ipcRenderer.invoke('gridgrid:get-state'),
@@ -36,7 +36,19 @@ const api = {
   openDevTools: (panelId: string): Promise<void> =>
     ipcRenderer.invoke('gridgrid:open-devtools', panelId),
   getRuntimeStats: (): Promise<Array<{ panelId: string; pid: number; memoryMB: number }>> =>
-    ipcRenderer.invoke('gridgrid:runtime-stats')
+    ipcRenderer.invoke('gridgrid:runtime-stats'),
+  getAppVersion: (): Promise<string> =>
+    ipcRenderer.invoke('gridgrid:get-app-version'),
+  getUpdateStatus: (): Promise<UpdateStatus> =>
+    ipcRenderer.invoke('gridgrid:get-update-status'),
+  checkForUpdates: (): Promise<UpdateStatus> =>
+    ipcRenderer.invoke('gridgrid:check-for-updates'),
+  installUpdate: (): Promise<boolean> =>
+    ipcRenderer.invoke('gridgrid:install-update'),
+  onUpdateStatus: (callback: (status: UpdateStatus) => void): void => {
+    ipcRenderer.removeAllListeners('gridgrid:update-status');
+    ipcRenderer.on('gridgrid:update-status', (_event, status: UpdateStatus) => callback(status));
+  }
 };
 
 contextBridge.exposeInMainWorld('gridgrid', api);

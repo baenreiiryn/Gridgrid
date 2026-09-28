@@ -74,7 +74,7 @@ export function setupAutoUpdater(): void {
     });
   });
 
-  window.setTimeout(() => {
+  setTimeout(() => {
     void autoUpdater.checkForUpdates().catch((error) => {
       broadcast({
         state: 'error',
@@ -83,7 +83,7 @@ export function setupAutoUpdater(): void {
     });
   }, 5000);
 
-  window.setInterval(() => {
+  setInterval(() => {
     void autoUpdater.checkForUpdates().catch(() => {
       // Event handler reports updater errors to the renderer.
     });

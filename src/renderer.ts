@@ -5,7 +5,8 @@ import type {
   LayoutMode,
   PanelBounds,
   PanelConfig,
-  WorkspaceConfig
+  WorkspaceConfig,
+  UpdateStatus
 } from '../electron/types';
 
 const appEl = document.querySelector<HTMLDivElement>('#app')!;
@@ -20,6 +21,8 @@ let boundsRaf = 0;
 let modalOpen = false;
 let draggedPanelId: string | null = null;
 let workspaceDialogMode: 'create' | 'rename' = 'create';
+let appVersion = '0.3.0';
+let updateStatus: UpdateStatus = { state: 'idle' };
 
 function esc(value: string): string {
   return value.replace(/[&<>'"]/g, (char) => ({
@@ -42,6 +45,41 @@ function layoutLabel(layout: LayoutMode): string {
     rows: 'Linhas',
     focus: 'Foco'
   } as Record<LayoutMode, string>)[layout];
+}
+
+function updateControlLabel(): string {
+  switch (updateStatus.state) {
+    case 'disabled':
+      return 'Atualizações no app instalado';
+    case 'checking':
+      return 'Verificando atualização...';
+    case 'available':
+      return updateStatus.version ? `v${updateStatus.version} disponível` : 'Atualização disponível';
+    case 'downloading':
+      return `Baixando ${Math.round(updateStatus.percent ?? 0)}%`;
+    case 'downloaded':
+      return updateStatus.version
+        ? `Reiniciar e instalar v${updateStatus.version}`
+        : 'Reiniciar e instalar';
+    case 'not-available':
+      return 'Gridgrid atualizado';
+    case 'error':
+      return 'Verificar atualização';
+    default:
+      return 'Verificar atualização';
+  }
+}
+
+function refreshUpdateControl(): void {
+  const button = document.querySelector<HTMLButtonElement>('#update-control');
+  if (!button) return;
+
+  button.textContent = updateControlLabel();
+  button.dataset.updateState = updateStatus.state;
+  button.disabled = ['disabled', 'checking', 'available', 'downloading'].includes(updateStatus.state);
+
+  const version = document.querySelector<HTMLElement>('#app-version');
+  if (version) version.textContent = `Gridgrid v${appVersion}`;
 }
 
 function presetFor(panel: PanelConfig) {
@@ -142,7 +180,10 @@ function render(): void {
           <span><i class="online-dot"></i> Local</span>
           <span>${panels.length} WebContentsView</span>
           <span class="status-spacer"></span>
-          <span>Gridgrid v0.2.2</span>
+          <button id="update-control" class="update-control" data-update-state="${updateStatus.state}">
+            ${updateControlLabel()}
+          </button>
+          <span id="app-version">Gridgrid v${esc(appVersion)}</span>
         </footer>
       </main>
     </div>
@@ -375,6 +416,18 @@ function bindEvents(): void {
     if (!confirm(`Excluir o workspace "${workspace.name}" e seus painéis?`)) return;
     state = await window.gridgrid.removeWorkspace(workspace.id);
     render();
+  });
+
+  document.querySelector('#update-control')?.addEventListener('click', async () => {
+    if (updateStatus.state === 'downloaded') {
+      await window.gridgrid.installUpdate();
+      return;
+    }
+
+    if (['idle', 'not-available', 'error'].includes(updateStatus.state)) {
+      updateStatus = await window.gridgrid.checkForUpdates();
+      refreshUpdateControl();
+    }
   });
 
   document.querySelector('#import-workspace')?.addEventListener('click', async () => {
@@ -683,7 +736,30 @@ async function refreshStats(): Promise<void> {
 }
 
 (async () => {
-  state = await window.gridgrid.getState();
+  const [initialState, version, initialUpdateStatus] = await Promise.all([
+    window.gridgrid.getState(),
+    window.gridgrid.getAppVersion(),
+    window.gridgrid.getUpdateStatus()
+  ]);
+
+  state = initialState;
+  appVersion = version;
+  updateStatus = initialUpdateStatus;
+
+  window.gridgrid.onUpdateStatus((status) => {
+    const previousState = updateStatus.state;
+    updateStatus = status;
+    refreshUpdateControl();
+
+    if (status.state === 'downloaded' && previousState !== 'downloaded') {
+      showToast(`Gridgrid v${status.version ?? 'nova'} baixado. Clique em "Reiniciar e instalar".`);
+    }
+
+    if (status.state === 'error' && status.message) {
+      console.warn('Gridgrid updater:', status.message);
+    }
+  });
+
   render();
   await refreshStats();
   setInterval(refreshStats, 3000);

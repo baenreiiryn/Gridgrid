@@ -149,3 +149,35 @@ button { color: inherit; }
 
 
 .workspace-dialog { width: min(390px, calc(100vw - 40px)); }
+
+
+.update-control {
+  border: 1px solid #28313e;
+  background: #111720;
+  color: #8f99a9;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 8px;
+}
+.update-control:hover:not(:disabled) {
+  color: #e5e9ef;
+  background: #18202b;
+}
+.update-control:disabled {
+  cursor: default;
+  opacity: .72;
+}
+.update-control[data-update-state="downloaded"] {
+  color: #d8f3df;
+  border-color: #315a3c;
+  background: #102318;
+}
+.update-control[data-update-state="downloading"] {
+  color: #d5c8ff;
+  border-color: #4d3c78;
+}
+.update-control[data-update-state="error"] {
+  color: #f3b0b0;
+  border-color: #63383c;
+}

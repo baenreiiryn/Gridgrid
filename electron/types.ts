@@ -50,3 +50,20 @@ export interface FileOperationResult {
   message?: string;
   state?: AppState;
 }
+
+export type UpdateState =
+  | 'disabled'
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  | 'not-available'
+  | 'error';
+
+export interface UpdateStatus {
+  state: UpdateState;
+  version?: string;
+  percent?: number;
+  message?: string;
+}

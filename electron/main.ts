@@ -12,6 +12,7 @@ import type {
   WorkspaceConfig
 } from './types';
 import { loadState, saveState } from './store';
+import { checkForUpdates, getUpdateStatus, installDownloadedUpdate, setupAutoUpdater } from './updater';
 
 const PANEL_COLORS = ['#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#3b82f6'];
 const DEFAULT_URL = 'https://huntera.com.br/';
@@ -327,6 +328,10 @@ async function importWorkspace(): Promise<FileOperationResult> {
 
 function registerIpc(): void {
   ipcMain.handle('gridgrid:get-state', () => state);
+  ipcMain.handle('gridgrid:get-app-version', () => app.getVersion());
+  ipcMain.handle('gridgrid:get-update-status', () => getUpdateStatus());
+  ipcMain.handle('gridgrid:check-for-updates', () => checkForUpdates());
+  ipcMain.handle('gridgrid:install-update', () => installDownloadedUpdate());
 
   ipcMain.handle('gridgrid:set-active-workspace', (_event, workspaceId: string) => {
     if (getWorkspace(workspaceId)) state.activeWorkspaceId = workspaceId;
@@ -497,6 +502,7 @@ if (gotSingleInstanceLock) {
     state = loadState();
     registerIpc();
     createMainWindow();
+    setupAutoUpdater();
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow();

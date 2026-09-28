@@ -10,7 +10,7 @@
     "build": "tsc -p tsconfig.main.json && vite build",
     "start": "electron .",
     "dist": "npm run build && electron-builder",
-    "dist:win": "npm run build && electron-builder --win nsis",
+    "dist:win": "npm run build && electron-builder --win nsis --publish never",
     "release:win": "npm run build && electron-builder --win nsis --publish always"
   },
   "devDependencies": {
